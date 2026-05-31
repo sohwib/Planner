@@ -826,6 +826,9 @@ function checkPW() {
   if (val === PASSWORD) {
     sessionStorage.setItem('pw_ok','1');
     document.getElementById('pw-screen').style.display = 'none';
+    renderHome();
+    renderWeekly();
+    renderCalendar();
   } else {
     document.getElementById('pw-error').textContent = '비밀번호가 틀렸어';
     document.getElementById('pw-input').value = '';
@@ -838,14 +841,7 @@ document.getElementById('pw-input').addEventListener('keydown', e => {
   document.getElementById('pw-error').textContent = '';
 });
 
-function initPW() {
-  // Already unlocked this session
-  if (sessionStorage.getItem('pw_ok') === '1') {
-    document.getElementById('pw-screen').style.display = 'none';
-  }
-  // Update title on password screen
-  document.getElementById('pw-title-el').textContent = S.plannerName || 'My Planner';
-}
+
 
 // ── Init ───────────────────────────────────────────────────
 (async()=>{
