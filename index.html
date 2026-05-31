@@ -190,6 +190,9 @@ body{font-family:var(--font);background:var(--bg2);color:var(--text);font-size:1
 </style>
 </head>
 <body>
+  <input id="taskInput" placeholder="할 일 입력">
+<button onclick="addTask()">추가</button>
+<div id="list"></div>
 <div class="app">
   <div class="app-header">
     <div class="app-title" id="app-title-el">My Planner</div>
@@ -882,6 +885,42 @@ function renderMiniCal(){
   await load();
   applyColors();renderHome();renderWeekly();renderCalendar();
 })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+const supabase = supabase.createClient(
+  "여기에 URL",
+  "여기에 KEY"
+);
+</script>
+  <script>
+
+async function addTask() {
+  const input = document.getElementById("taskInput").value;
+
+  await supabase
+    .from("tasks")
+    .insert([{ task: input }]);
+
+  loadTasks();
+}
+
+async function loadTasks() {
+  const { data } = await supabase
+    .from("tasks")
+    .select("*");
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach(item => {
+    list.innerHTML += `<div>${item.task}</div>`;
+  });
+}
+
+loadTasks();
+
 </script>
 </body>
 </html>
