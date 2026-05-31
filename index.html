@@ -197,6 +197,13 @@ body{font-family:var(--font);background:var(--bg2);color:var(--text);font-size:1
 .pw-btn{width:100%;padding:10px;background:var(--accent);color:var(--bg);border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;}
 .pw-btn:hover{opacity:0.85;}
 .pw-error{font-size:12px;color:#e24b4a;margin-top:8px;min-height:16px;}
+
+/* Loading screen */
+.loading-screen{position:fixed;inset:0;background:var(--bg2);display:flex;align-items:center;justify-content:center;z-index:998;}
+.loading-box{text-align:center;}
+.loading-spinner{width:32px;height:32px;border:2.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:13px;color:var(--text2);}
 </style>
 </head>
 <body>
@@ -836,24 +843,50 @@ function checkPW() {
   }
 }
 
-document.getElementById('pw-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') checkPW();
-  document.getElementById('pw-error').textContent = '';
-});
+
 
 
 
 // ── Init ───────────────────────────────────────────────────
 (async()=>{
+  // Attach pw input listener now that DOM is ready
+  document.getElementById('pw-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkPW();
+    document.getElementById('pw-error').textContent = '';
+  });
+
+  // Show spinner, hide pw screen while loading
+  document.getElementById('loading-screen').style.display = 'flex';
+  document.getElementById('pw-screen').style.display = 'none';
+
   await dbLoad();
   applyColors();
-  initPW();
-  renderHome();
-  renderWeekly();
-  renderCalendar();
+
+  // Hide spinner
+  document.getElementById('loading-screen').style.display = 'none';
+
+  // Update pw screen title
+  document.getElementById('pw-title-el').textContent = S.plannerName || 'My Planner';
+
+  if (sessionStorage.getItem('pw_ok') === '1') {
+    document.getElementById('pw-screen').style.display = 'none';
+    renderHome();
+    renderWeekly();
+    renderCalendar();
+  } else {
+    document.getElementById('pw-screen').style.display = 'flex';
+  }
 })();
 </script>
 
+
+<!-- Loading screen -->
+<div class="loading-screen" id="loading-screen">
+  <div class="loading-box">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">불러오는 중...</div>
+  </div>
+</div>
 <!-- Password screen -->
 <div class="pw-screen" id="pw-screen">
   <div class="pw-box">
