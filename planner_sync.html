@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Planner</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --bg2: #f7f7f5;
+  --bg3: #efefec;
+  --border: rgba(0,0,0,0.09);
+  --border2: rgba(0,0,0,0.18);
+  --text: #1a1a1a;
+  --text2: #6b6b6b;
+  --text3: #b0b0b0;
+  --accent: #1a1a1a;
+  --accent-light: #f0f0f0;
+  --green-bg:#eaf3de;--green-text:#3b6d11;
+  --blue-bg:#e6f1fb;--blue-text:#185fa5;
+  --gray-bg:#f1efe8;--gray-text:#5f5e5a;
+  --done-bg:#e8f5e9;--done-text:#2e7d32;
+  --radius:10px;--radius-sm:6px;
+  --font: 'Helvetica Neue', Arial, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg2);color:var(--text);font-size:14px;min-height:100vh;}
+.app{max-width:740px;margin:0 auto;padding:24px 16px 80px;}
+.app-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.app-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.01em;}
+
+/* Cards */
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.section-label{font-size:11px;font-weight:600;letter-spacing:0.07em;color:var(--text3);text-transform:uppercase;margin-bottom:12px;}
+
+/* Tables */
+.base-table{width:100%;border-collapse:collapse;}
+.base-table th{font-size:11px;color:var(--text3);font-weight:500;text-align:left;padding:0 8px 8px 0;border-bottom:0.5px solid var(--border);}
+.base-table td{padding:9px 8px 9px 0;border-bottom:0.5px solid var(--border);vertical-align:middle;font-size:13px;}
+.base-table tr:last-child td{border-bottom:none;}
+
+.badge{display:inline-flex;align-items:center;font-size:11px;padding:2px 9px;border-radius:999px;white-space:nowrap;font-weight:500;}
+.b-active{background:var(--green-bg);color:var(--green-text);}
+.b-start{background:var(--blue-bg);color:var(--blue-text);}
+.b-wait{background:var(--gray-bg);color:var(--gray-text);}
+.b-done{background:var(--done-bg);color:var(--done-text);}
+
+.inline-input{background:transparent;border:none;outline:none;font-family:var(--font);font-size:13px;color:var(--text);width:100%;}
+.inline-input::placeholder{color:var(--text3);}
+
+/* Tabs */
+.tab-section{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.tab-bar{display:flex;border-bottom:0.5px solid var(--border);background:var(--bg2);}
+.tab-btn{padding:11px 20px;font-size:13px;font-weight:500;color:var(--text2);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-0.5px;transition:color 0.12s;}
+.tab-btn.active{color:var(--text);border-bottom:2px solid var(--accent);background:var(--bg);}
+.tab-btn:hover:not(.active){color:var(--text);}
+.tab-pane{display:none;padding:18px;}
+.tab-pane.active{display:block;}
+
+/* Checklist */
+.cl-toggle{background:transparent;border:0.5px solid var(--border);border-radius:var(--radius-sm);width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:middle;font-size:15px;color:var(--text2);transition:background 0.12s;padding:0;justify-content:center;}
+.cl-toggle:hover{background:var(--bg2);}
+.cl-panel{display:none;background:var(--bg2);border-radius:var(--radius-sm);padding:10px 12px;margin-top:4px;flex-direction:column;gap:8px;}
+.cl-panel.open{display:flex;}
+.cl-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);}
+.cl-row input[type="checkbox"]{width:14px;height:14px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;}
+.cl-done{text-decoration:line-through;color:var(--text3);}
+
+/* Weekly */
+.week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.week-range{font-size:14px;font-weight:600;color:var(--text);cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border2);}
+.week-range:hover{opacity:0.7;}
+.event-tag{display:inline-flex;align-items:center;font-size:11px;padding:2px 9px;border-radius:999px;white-space:nowrap;font-weight:500;color:#fff;}
+.mini-cal-overlay{display:none;position:fixed;inset:0;z-index:200;}
+.mini-cal-overlay.open{display:block;}
+.mini-cal-popup{position:fixed;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:14px;width:240px;box-shadow:0 8px 24px rgba(0,0,0,0.14);z-index:201;}
+.mini-cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mini-cal-label{font-size:13px;font-weight:600;color:var(--text);}
+.mini-nav-btn{background:transparent;border:0.5px solid var(--border);border-radius:var(--radius-sm);width:24px;height:24px;cursor:pointer;font-size:13px;color:var(--text2);display:flex;align-items:center;justify-content:center;}
+.mini-nav-btn:hover{background:var(--bg2);}
+.mini-cal-grid{width:100%;border-collapse:collapse;}
+.mini-cal-grid th{font-size:10px;color:var(--text3);text-align:center;padding:0 0 6px;font-weight:500;}
+.mini-cal-grid td{text-align:center;padding:1px;}
+.mini-day{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--text);cursor:pointer;background:transparent;border:none;font-family:var(--font);}
+.mini-day:hover{background:var(--bg3);}
+.mini-day.m-today{background:var(--accent);color:var(--bg);font-weight:600;}
+.mini-day.m-inweek{background:var(--accent-light);}
+.mini-day.m-inweek.m-today{background:var(--accent);color:var(--bg);}
+.mini-day.m-other{color:var(--text3);}
+.week-nav-btn{background:transparent;border:0.5px solid var(--border);border-radius:var(--radius-sm);width:30px;height:30px;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;}
+.week-nav-btn:hover{background:var(--bg2);}
+.week-day-block{margin-bottom:14px;}
+.week-day-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.week-day-label{font-size:13px;font-weight:600;color:var(--text);min-width:64px;}
+.week-day-label.today-day{color:var(--accent);}
+.fixed-tag{font-size:11px;color:var(--text2);background:var(--bg3);border:0.5px solid var(--border);border-radius:999px;padding:2px 9px;white-space:nowrap;}
+.todo-list{display:flex;flex-direction:column;gap:7px;padding-left:4px;}
+.todo-item{display:flex;align-items:center;gap:9px;}
+.todo-item input[type="checkbox"]{width:15px;height:15px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;}
+.todo-item .todo-text{flex:1;background:transparent;border:none;border-bottom:0.5px solid var(--border);outline:none;font-family:var(--font);font-size:13px;color:var(--text);padding:3px 0;}
+.todo-item .todo-text::placeholder{color:var(--text3);}
+.todo-item .todo-text.done-text{text-decoration:line-through;color:var(--text3);}
+.todo-del{background:transparent;border:none;cursor:pointer;color:var(--text3);font-size:17px;line-height:1;padding:0;}
+.todo-del:hover{color:#e24b4a;}
+.add-todo-btn{display:flex;align-items:center;gap:6px;background:transparent;border:none;font-family:var(--font);font-size:12px;color:var(--text3);cursor:pointer;padding:3px 0 0 4px;margin-top:4px;}
+.add-todo-btn:hover{color:var(--text2);}
+.week-divider{height:0.5px;background:var(--border);margin:14px 0;}
+.goal-section-title{font-size:11px;font-weight:600;letter-spacing:0.07em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;}
+.goal-item{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.goal-pname{font-size:12px;color:var(--text2);min-width:90px;}
+.goal-input{flex:1;background:transparent;border:none;border-bottom:0.5px solid var(--border);outline:none;font-family:var(--font);font-size:13px;color:var(--text);padding:3px 0;}
+.goal-input::placeholder{color:var(--text3);}
+
+/* Calendar */
+.cal-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-month-label{font-size:15px;font-weight:600;color:var(--text);}
+.cal-grid{width:100%;border-collapse:collapse;margin-bottom:18px;}
+.cal-grid th{font-size:11px;color:var(--text3);text-align:center;padding:0 0 8px;font-weight:500;}
+.cal-grid td{text-align:center;padding:3px;}
+.cal-day-btn{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:var(--text);cursor:pointer;background:transparent;border:none;position:relative;font-family:var(--font);transition:background 0.1s;}
+.cal-day-btn:hover{background:var(--bg3);}
+.cal-day-btn.today{background:var(--accent);color:var(--bg);font-weight:600;}
+.cal-day-btn.other{color:var(--text3);}
+.cal-day-btn.in-selected-week{background:var(--accent-light);}
+.cal-day-btn.in-selected-week.today{background:var(--accent);color:var(--bg);}
+.cal-day-btn.has-event::after{content:'';width:4px;height:4px;border-radius:50%;background:#378ADD;position:absolute;bottom:3px;left:50%;transform:translateX(-50%);}
+.cal-day-btn.today.has-event::after{background:#90caf9;}
+.event-list{display:flex;flex-direction:column;gap:7px;}
+.event-item{display:flex;align-items:center;gap:10px;background:var(--bg2);border-radius:var(--radius-sm);padding:8px 12px;}
+.event-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.event-date-lbl{font-size:11px;color:var(--text2);min-width:46px;}
+.event-name{font-size:13px;color:var(--text);flex:1;}
+.event-del{background:transparent;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0;line-height:1;}
+.event-del:hover{color:#e24b4a;}
+
+/* Modals */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.28);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg);border-radius:var(--radius);padding:22px;width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.12);}
+.modal-title{font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text);}
+.modal-field{margin-bottom:14px;}
+.modal-label{font-size:12px;color:var(--text2);margin-bottom:5px;}
+.modal-input{width:100%;border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:8px 10px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg);outline:none;}
+.modal-input:focus{border-color:var(--accent);}
+.modal-select{width:100%;border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:8px 10px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg);outline:none;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+.btn{padding:8px 16px;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;border:0.5px solid var(--border2);background:var(--bg);color:var(--text);}
+.btn-primary{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.btn:hover{opacity:0.8;}
+
+/* Settings */
+.settings-modal{background:var(--bg);border-radius:var(--radius);padding:22px;width:520px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.12);}
+.settings-tabs{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:20px;}
+.stab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--text2);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-0.5px;}
+.stab.active{color:var(--text);border-bottom:2px solid var(--accent);}
+.spane{display:none;}.spane.active{display:block;}
+.settings-section{margin-bottom:20px;}
+.settings-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:12px;}
+.proj-edit-row{display:flex;align-items:flex-start;gap:8px;padding:10px 0;border-bottom:0.5px solid var(--border);flex-direction:column;}
+.proj-edit-top{display:flex;align-items:center;gap:8px;width:100%;}
+.proj-edit-input{flex:1;background:transparent;border:none;outline:none;font-family:var(--font);font-size:13px;color:var(--text);}
+.proj-edit-select{border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:3px 6px;font-family:var(--font);font-size:12px;color:var(--text);background:var(--bg);outline:none;}
+.proj-del-btn{background:transparent;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0;line-height:1;flex-shrink:0;}
+.proj-del-btn:hover{color:#e24b4a;}
+.cl-edit-area{width:100%;padding-left:4px;}
+.cl-edit-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.cl-edit-input{flex:1;background:transparent;border:none;border-bottom:0.5px solid var(--border);outline:none;font-family:var(--font);font-size:12px;color:var(--text);padding:2px 0;}
+.cl-edit-input::placeholder{color:var(--text3);}
+.cl-item-del{background:transparent;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:0;line-height:1;}
+.cl-item-del:hover{color:#e24b4a;}
+.add-cl-btn{background:transparent;border:none;font-family:var(--font);font-size:12px;color:var(--text3);cursor:pointer;padding:2px 0;}
+.add-cl-btn:hover{color:var(--text2);}
+.add-proj-btn{display:flex;align-items:center;gap:6px;background:transparent;border:0.5px dashed var(--border2);border-radius:var(--radius-sm);padding:8px 12px;font-family:var(--font);font-size:13px;color:var(--text2);cursor:pointer;width:100%;margin-top:8px;}
+.add-proj-btn:hover{background:var(--bg2);}
+.fixed-edit-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border);}
+.fixed-edit-row:last-child{border-bottom:none;}
+.fixed-day-lbl{font-size:12px;font-weight:600;color:var(--text2);min-width:22px;}
+.fixed-edit-input{flex:1;background:transparent;border:none;outline:none;font-family:var(--font);font-size:13px;color:var(--text);}
+.fixed-edit-input::placeholder{color:var(--text3);}
+.color-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.color-label{font-size:13px;color:var(--text);min-width:100px;}
+.color-swatch{width:32px;height:32px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);cursor:pointer;padding:0;}
+.appearance-input{width:100%;border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:8px 10px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg);outline:none;margin-bottom:10px;}
+
+/* Settings trigger */
+.settings-btn{position:fixed;bottom:20px;right:20px;width:40px;height:40px;background:var(--accent);color:var(--bg);border:none;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:50;}
+.settings-btn:hover{opacity:0.85;}
+.divider{height:0.5px;background:var(--border);margin:14px 0;}
+.empty-msg{font-size:13px;color:var(--text3);padding:8px 0;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div class="app-title" id="app-title-el">My Planner</div>
+    <div id="sync-status" style="font-size:12px;color:var(--text3);"></div>
+  </div>
+
+  <!-- HOME = PROJ -->
+  <div class="card" id="home-card">
+    <div class="section-label" id="home-label-el">Projects</div>
+    <table class="base-table">
+      <thead><tr>
+        <th style="width:32%">프로젝트</th>
+        <th style="width:20%">상태</th>
+        <th>다음 할 것</th>
+        <th style="width:36px"></th>
+      </tr></thead>
+      <tbody id="home-body"></tbody>
+    </table>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-section">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('weekly',this)">Weekly</button>
+      <button class="tab-btn" onclick="switchTab('cal',this)">Calendar</button>
+    </div>
+
+    <!-- WEEKLY -->
+    <div class="tab-pane active" id="tab-weekly">
+      <div class="week-nav">
+        <button class="week-nav-btn" onclick="changeWeek(-1)">&#8249;</button>
+        <button class="week-range" id="week-range-label" onclick="openMiniCal(event)"></button>
+        <button class="week-nav-btn" onclick="changeWeek(1)">&#8250;</button>
+      </div>
+      <div id="week-days-container"></div>
+      <div class="week-divider"></div>
+      <div class="goal-section-title">이번 주 집중 목표</div>
+      <div id="goal-list"></div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="tab-pane" id="tab-cal">
+      <div class="cal-nav-row">
+        <button class="week-nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+        <div class="cal-month-label" id="cal-month-label"></div>
+        <button class="week-nav-btn" onclick="changeMonth(1)">&#8250;</button>
+      </div>
+      <table class="cal-grid">
+        <thead><tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr></thead>
+        <tbody id="cal-body"></tbody>
+      </table>
+      <div class="section-label">일정 목록</div>
+      <div class="event-list" id="event-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Event Modal -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <div class="modal-title" id="event-modal-title">일정 추가</div>
+    <div class="modal-field">
+      <div class="modal-label">일정 이름</div>
+      <input class="modal-input" id="event-name-input" placeholder="일정 입력..." />
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">색상</div>
+      <select class="modal-select" id="event-color-select">
+        <option value="#378ADD">파란색</option>
+        <option value="#1D9E75">초록색</option>
+        <option value="#D85A30">주황색</option>
+        <option value="#D4537E">분홍색</option>
+        <option value="#7F77DD">보라색</option>
+        <option value="#888780">회색</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeEventModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveEvent()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mini Calendar Popup -->
+<div class="mini-cal-overlay" id="mini-cal-overlay" onclick="closeMiniCal()"></div>
+<div class="mini-cal-popup" id="mini-cal-popup" style="display:none;">
+  <div class="mini-cal-nav">
+    <button class="mini-nav-btn" onclick="miniChangeMonth(-1)">&#8249;</button>
+    <div class="mini-cal-label" id="mini-cal-label"></div>
+    <button class="mini-nav-btn" onclick="miniChangeMonth(1)">&#8250;</button>
+  </div>
+  <table class="mini-cal-grid">
+    <thead><tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr></thead>
+    <tbody id="mini-cal-body"></tbody>
+  </table>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="settings-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:15px;font-weight:600;">설정</div>
+      <button class="btn" onclick="closeSettings()">닫기</button>
+    </div>
+    <div class="settings-tabs">
+      <button class="stab active" onclick="switchStab('appearance',this)">외관</button>
+      <button class="stab" onclick="switchStab('projects',this)">프로젝트</button>
+      <button class="stab" onclick="switchStab('schedule',this)">고정 일정</button>
+    </div>
+
+    <!-- Appearance -->
+    <div class="spane active" id="spane-appearance">
+      <div class="settings-section">
+        <div class="settings-section-title">플래너 이름</div>
+        <input class="appearance-input" id="s-planner-name" placeholder="My Planner" />
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">섹션 이름</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="font-size:13px;color:var(--text2);min-width:80px;">홈 섹션</span>
+          <input class="appearance-input" id="s-home-label" placeholder="Projects" style="margin-bottom:0;flex:1;" />
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">색상</div>
+        <div class="color-row">
+          <span class="color-label">배경색</span>
+          <input type="color" id="c-bg2" class="color-swatch" />
+        </div>
+        <div class="color-row">
+          <span class="color-label">카드 색</span>
+          <input type="color" id="c-bg" class="color-swatch" />
+        </div>
+        <div class="color-row">
+          <span class="color-label">강조색 (탭·버튼)</span>
+          <input type="color" id="c-accent" class="color-swatch" />
+        </div>
+        <div class="color-row">
+          <span class="color-label">텍스트 색</span>
+          <input type="color" id="c-text" class="color-swatch" />
+        </div>
+      </div>
+      <button class="btn" onclick="resetColors()" style="margin-top:4px;">기본값으로 초기화</button>
+    </div>
+
+    <!-- Projects -->
+    <div class="spane" id="spane-projects">
+      <div id="proj-edit-list"></div>
+      <button class="add-proj-btn" onclick="addProject()">+ 프로젝트 추가</button>
+    </div>
+
+    <!-- Schedule -->
+    <div class="spane" id="spane-schedule">
+      <div class="settings-section-title">고정 일정</div>
+      <div id="fixed-edit-list"></div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+      <button class="btn btn-primary" onclick="saveSettings()">저장</button>
+    </div>
+  </div>
+</div>
+
+<button class="settings-btn" onclick="openSettings()">⚙</button>
+
+<script>
+const DAYS_KO = ['월','화','수','목','금','토','일'];
+const MONTHS_KO = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const STATUS_LIST = ['진행중','시작 전','대기','완료'];
+
+function badgeClass(s){
+  if(s==='진행중') return 'b-active';
+  if(s==='시작 전') return 'b-start';
+  if(s==='대기') return 'b-wait';
+  if(s==='완료') return 'b-done';
+  return 'b-wait';
+}
+
+const DEFAULT = {
+  plannerName:'My Planner',
+  homeLabel:'Projects',
+  colors:{ bg:'#ffffff', bg2:'#f7f7f5', accent:'#1a1a1a', text:'#1a1a1a' },
+  projects:[
+    {id:1,name:'🎬 학교 ATR',status:'진행중',next:'',checklist:[{text:'매주 미팅 참석 (월/목)',done:false},{text:'기법 공부 후 적용',done:false},{text:'30초 모션그래픽 완성',done:false},{text:'최종 제출',done:false}]},
+    {id:2,name:'📱 앱 디자인',status:'시작 전',next:'',checklist:[{text:'UX/UI 기초 공부',done:false},{text:'프로젝트 방향 확정',done:false},{text:'와이어프레임 초안',done:false},{text:'디자인 시스템 구축',done:false},{text:'프로토타입 제작',done:false}]},
+    {id:3,name:'📚 모션 강의',status:'진행중',next:'',checklist:[{text:'강의 A 완강 (필기 위주)',done:false},{text:'강의 B 완강 (에펙 따라하기)',done:false},{text:'배운 기법 정리 노트',done:false},{text:'학교 프로젝트에 적용',done:false}]},
+    {id:4,name:'🎨 개인 포폴',status:'대기',next:'',checklist:[{text:'주제/콘셉트 구상',done:false},{text:'레퍼런스 수집',done:false},{text:'작업 (1~2일)',done:false},{text:'포폴에 업로드',done:false}]},
+    {id:5,name:'🎓 졸작',status:'진행중',next:'',checklist:[{text:'러프 비트보드 완성',done:false},{text:'상세 스토리보드 완성',done:false},{text:'캐릭터시트 완성',done:false},{text:'의상 베리에이션 완성',done:false},{text:'3D environment blockout',done:false}]},
+  ],
+  fixed:{월:'학교 미팅 새벽',화:'',수:'',목:'학교 미팅 새벽',금:'',토:'',일:'앱 미팅 + 주간계획'},
+  goals:{},
+  weekTodos:{},
+  events:[
+    {id:1,date:'2025-06-14',name:'한국 출국 + 새 노트북 구매',color:'#378ADD'},
+    {id:2,date:'2025-08-31',name:'졸작 preproduction 완료 목표',color:'#D85A30'},
+  ],
+  nextId:20,
+  calYear:new Date().getFullYear(),
+  calMonth:new Date().getMonth(),
+  selectedWeekMonday: getMondayStr(new Date()),
+};
+
+function getMondayStr(d){
+  const dt = new Date(d);
+  const day = dt.getDay();
+  const diff = (day===0)?-6:1-day;
+  dt.setDate(dt.getDate()+diff);
+  return dt.toISOString().slice(0,10);
+}
+function addDays(str,n){
+  const d=new Date(str);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);
+}
+function formatDateKo(str){
+  const d=new Date(str);
+  return (d.getMonth()+1)+'월 '+d.getDate()+'일';
+}
+function isToday(str){
+  const t=new Date();
+  const ts=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+  return str===ts;
+}
+
+const SUPA_URL="https://ixyfblksaszjpuyfsttv.supabase.co";
+const SUPA_KEY="sb_publishable__p241TRxpekmNgKUsMYCZw_xNkrkvGX";
+
+let S={};
+let saveTimer=null;
+
+async function load(){
+  // Show loading
+  document.getElementById('sync-status').textContent='불러오는 중...';
+  try{
+    const res=await fetch(SUPA_URL+'/rest/v1/planner_data?id=eq.main&select=data',{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    });
+    const rows=await res.json();
+    if(rows&&rows.length&&rows[0].data&&Object.keys(rows[0].data).length>0){
+      S=rows[0].data;
+    } else {
+      S=JSON.parse(JSON.stringify(DEFAULT));
+    }
+  } catch(e){
+    // fallback to localStorage
+    try{const r=localStorage.getItem('plannerv3');if(r)S=JSON.parse(r);else S=JSON.parse(JSON.stringify(DEFAULT));}
+    catch(e2){S=JSON.parse(JSON.stringify(DEFAULT));}
+  }
+  ['plannerName','homeLabel','colors','projects','fixed','goals','weekTodos','events','nextId','calYear','calMonth','selectedWeekMonday'].forEach(k=>{
+    if(S[k]===undefined)S[k]=JSON.parse(JSON.stringify(DEFAULT[k]));
+  });
+  document.getElementById('sync-status').textContent='';
+}
+
+function save(){
+  // Save to localStorage immediately as backup
+  try{localStorage.setItem('plannerv3',JSON.stringify(S));}catch(e){}
+  // Debounce Supabase save
+  if(saveTimer)clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    document.getElementById('sync-status').textContent='저장 중...';
+    try{
+      await fetch(SUPA_URL+'/rest/v1/planner_data?id=eq.main',{
+        method:'PATCH',
+        headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({data:S,updated_at:new Date().toISOString()})
+      });
+      document.getElementById('sync-status').textContent='✓ 저장됨';
+      setTimeout(()=>document.getElementById('sync-status').textContent='',2000);
+    } catch(e){
+      document.getElementById('sync-status').textContent='⚠ 저장 실패 (오프라인)';
+    }
+  },800);
+}
+
+function applyColors(){
+  const r=document.documentElement.style;
+  const c=S.colors||DEFAULT.colors;
+  r.setProperty('--bg',c.bg||'#ffffff');
+  r.setProperty('--bg2',c.bg2||'#f7f7f5');
+  r.setProperty('--accent',c.accent||'#1a1a1a');
+  r.setProperty('--text',c.text||'#1a1a1a');
+  const hex=c.accent||'#1a1a1a';
+  r.setProperty('--accent-light',hex+'18');
+}
+
+/* ---- HOME / PROJ ---- */
+function renderHome(){
+  document.getElementById('app-title-el').textContent=S.plannerName||'My Planner';
+  document.getElementById('home-label-el').textContent=S.homeLabel||'Projects';
+  const tb=document.getElementById('home-body');
+  tb.innerHTML='';
+  S.projects.forEach(p=>{
+    const clId='hcl_'+p.id;
+    const trMain=document.createElement('tr');
+    trMain.innerHTML=`
+      <td style="font-weight:500;">${p.name}</td>
+      <td><span class="badge ${badgeClass(p.status)}">${p.status}</span></td>
+      <td><input class="inline-input" data-pid="${p.id}" value="${esc(p.next||'')}" placeholder="→ 다음 할 것" /></td>
+      <td><button class="cl-toggle" onclick="toggleCL('${clId}')">☰</button></td>`;
+    tb.appendChild(trMain);
+    const trCL=document.createElement('tr');
+    trCL.innerHTML=`<td colspan="4" style="padding:0;"><div class="cl-panel" id="${clId}"></div></td>`;
+    tb.appendChild(trCL);
+    const panel=trCL.querySelector('.cl-panel');
+    (p.checklist||[]).forEach((item,idx)=>{
+      const lbl=document.createElement('label');
+      lbl.className='cl-row';
+      lbl.innerHTML=`<input type="checkbox" ${item.done?'checked':''} data-pid="${p.id}" data-idx="${idx}" /><span class="${item.done?'cl-done':''}">${esc(item.text)}</span>`;
+      panel.appendChild(lbl);
+    });
+    panel.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+      cb.addEventListener('change',e=>{
+        const proj=S.projects.find(pp=>pp.id===parseInt(e.target.dataset.pid));
+        if(proj){proj.checklist[parseInt(e.target.dataset.idx)].done=e.target.checked;save();renderHome();}
+      });
+    });
+  });
+  tb.querySelectorAll('.inline-input').forEach(inp=>{
+    inp.addEventListener('input',e=>{
+      const proj=S.projects.find(p=>p.id===parseInt(e.target.dataset.pid));
+      if(proj){proj.next=e.target.value;save();}
+    });
+  });
+}
+
+function toggleCL(id){document.getElementById(id).classList.toggle('open');}
+
+/* ---- WEEKLY ---- */
+function renderWeekly(){
+  const mon=S.selectedWeekMonday;
+  const sun=addDays(mon,6);
+  document.getElementById('week-range-label').textContent=formatDateKo(mon)+' – '+formatDateKo(sun);
+  const container=document.getElementById('week-days-container');
+  container.innerHTML='';
+  DAYS_KO.forEach((d,i)=>{
+    const dateStr=addDays(mon,i);
+    const todayClass=isToday(dateStr)?' today-day':'';
+    const fixed=S.fixed[d]||'';
+    const todos=S.weekTodos[dateStr]||[];
+    const block=document.createElement('div');
+    block.className='week-day-block';
+    const dayEvents=(S.events||[]).filter(ev=>ev.date===dateStr);
+    const eventTagsHtml=dayEvents.map(ev=>`<span class="event-tag" style="background:${ev.color||'#378ADD'}">${esc(ev.name)}</span>`).join('');
+    block.innerHTML=`
+      <div class="week-day-header">
+        <div class="week-day-label${todayClass}">${d} <span style="font-size:12px;font-weight:400;color:var(--text2);">${formatDateKo(dateStr)}</span></div>
+        ${fixed?`<span class="fixed-tag">${esc(fixed)}</span>`:''}
+        ${eventTagsHtml}
+      </div>
+      <div class="todo-list" id="tl_${dateStr}"></div>
+      <button class="add-todo-btn" onclick="addTodo('${dateStr}')">+ 추가</button>
+    `;
+    if(i<6){const div2=document.createElement('div');div2.className='week-divider';container.appendChild(block);container.appendChild(div2);}
+    else container.appendChild(block);
+    renderDayTodos(dateStr);
+  });
+  const gl=document.getElementById('goal-list');
+  gl.innerHTML='';
+  S.projects.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='goal-item';
+    div.innerHTML=`<span class="goal-pname">${p.name}</span><input class="goal-input" data-pid="${p.id}" value="${esc(S.goals[p.id]||'')}" placeholder="이번 주 목표" />`;
+    gl.appendChild(div);
+  });
+  gl.querySelectorAll('.goal-input').forEach(inp=>{
+    inp.addEventListener('input',e=>{S.goals[e.target.dataset.pid]=e.target.value;save();});
+  });
+}
+
+function renderDayTodos(dateStr){
+  const tl=document.getElementById('tl_'+dateStr);
+  if(!tl)return;
+  tl.innerHTML='';
+  const todos=S.weekTodos[dateStr]||[];
+  todos.forEach((todo,idx)=>{
+    const div=document.createElement('div');
+    div.className='todo-item';
+    div.innerHTML=`<input type="checkbox" ${todo.done?'checked':''} /><input type="text" class="todo-text${todo.done?' done-text':''}" value="${esc(todo.text||'')}" placeholder="할 것 입력" /><button class="todo-del">×</button>`;
+    tl.appendChild(div);
+    div.querySelector('input[type="checkbox"]').addEventListener('change',e=>{
+      S.weekTodos[dateStr][idx].done=e.target.checked;
+      div.querySelector('.todo-text').classList.toggle('done-text',e.target.checked);
+      save();
+    });
+    div.querySelector('.todo-text').addEventListener('input',e=>{
+      S.weekTodos[dateStr][idx].text=e.target.value;save();
+    });
+    div.querySelector('.todo-del').addEventListener('click',()=>{
+      S.weekTodos[dateStr].splice(idx,1);save();renderDayTodos(dateStr);
+    });
+  });
+}
+
+function addTodo(dateStr){
+  if(!S.weekTodos[dateStr])S.weekTodos[dateStr]=[];
+  S.weekTodos[dateStr].push({text:'',done:false});
+  save();renderDayTodos(dateStr);
+  setTimeout(()=>{
+    const tl=document.getElementById('tl_'+dateStr);
+    if(tl){const inputs=tl.querySelectorAll('.todo-text');if(inputs.length)inputs[inputs.length-1].focus();}
+  },30);
+}
+
+function changeWeek(dir){
+  S.selectedWeekMonday=addDays(S.selectedWeekMonday,dir*7);
+  save();renderWeekly();
+}
+
+/* ---- CALENDAR ---- */
+let pendingDate=null;
+
+function renderCalendar(){
+  const yr=S.calYear,mo=S.calMonth;
+  document.getElementById('cal-month-label').textContent=yr+'년 '+MONTHS_KO[mo];
+  const body=document.getElementById('cal-body');
+  body.innerHTML='';
+  const today=new Date();
+  const firstDay=new Date(yr,mo,1).getDay();
+  const daysInMonth=new Date(yr,mo+1,0).getDate();
+  const daysInPrev=new Date(yr,mo,0).getDate();
+  const eventDates={};
+  S.events.forEach(ev=>{if(ev.date)eventDates[ev.date]=ev.color||'#378ADD';});
+  const selMon=S.selectedWeekMonday;
+  const selSun=addDays(selMon,6);
+  let cells=[];
+  for(let i=firstDay-1;i>=0;i--)cells.push({d:daysInPrev-i,other:true});
+  for(let d=1;d<=daysInMonth;d++)cells.push({d,other:false});
+  while(cells.length%7!==0)cells.push({d:cells.length-firstDay-daysInMonth+1,other:true});
+  for(let r=0;r<cells.length/7;r++){
+    const tr=document.createElement('tr');
+    for(let c=0;c<7;c++){
+      const cell=cells[r*7+c];
+      const td=document.createElement('td');
+      const dateStr=yr+'-'+String(mo+1).padStart(2,'0')+'-'+String(cell.d).padStart(2,'0');
+      const isTod=!cell.other&&cell.d===today.getDate()&&mo===today.getMonth()&&yr===today.getFullYear();
+      const hasEv=!cell.other&&eventDates[dateStr];
+      const inSelWeek=!cell.other&&dateStr>=selMon&&dateStr<=selSun;
+      const btn=document.createElement('button');
+      btn.className='cal-day-btn'+(cell.other?' other':'')+(isTod?' today':'')+(hasEv?' has-event':'')+(inSelWeek?' in-selected-week':'');
+      btn.textContent=cell.d;
+      if(!cell.other)btn.onclick=()=>onCalDayClick(dateStr);
+      td.appendChild(btn);tr.appendChild(td);
+    }
+    body.appendChild(tr);
+  }
+  renderEventList();
+}
+
+function onCalDayClick(dateStr){
+  openEventModal(dateStr);
+}
+
+function renderEventList(){
+  const el=document.getElementById('event-list');
+  el.innerHTML='';
+  const sorted=[...S.events].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  sorted.forEach(ev=>{
+    const div=document.createElement('div');div.className='event-item';
+    const parts=ev.date?ev.date.split('-'):['','',''];
+    const lbl=ev.date?parseInt(parts[1])+'/'+parseInt(parts[2]):'—';
+    div.innerHTML=`<div class="event-dot" style="background:${ev.color||'#378ADD'}"></div><span class="event-date-lbl">${lbl}</span><span class="event-name">${esc(ev.name)}</span><button class="event-del" onclick="deleteEvent(${ev.id})">×</button>`;
+    el.appendChild(div);
+  });
+  if(!sorted.length)el.innerHTML='<div class="empty-msg">날짜를 클릭해서 일정을 추가해줘</div>';
+}
+
+function changeMonth(dir){
+  S.calMonth+=dir;
+  if(S.calMonth>11){S.calMonth=0;S.calYear++;}
+  if(S.calMonth<0){S.calMonth=11;S.calYear--;}
+  save();renderCalendar();
+}
+
+function openEventModal(dateStr){
+  pendingDate=dateStr;
+  const parts=dateStr.split('-');
+  document.getElementById('event-modal-title').textContent=parseInt(parts[1])+'월 '+parseInt(parts[2])+'일 일정 추가';
+  document.getElementById('event-name-input').value='';
+  document.getElementById('event-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('event-name-input').focus(),50);
+}
+function closeEventModal(){document.getElementById('event-modal').classList.remove('open');pendingDate=null;}
+function saveEvent(){
+  const name=document.getElementById('event-name-input').value.trim();
+  if(!name)return;
+  const color=document.getElementById('event-color-select').value;
+  S.events.push({id:S.nextId++,date:pendingDate,name,color});
+  save();closeEventModal();renderCalendar();
+}
+function deleteEvent(id){S.events=S.events.filter(e=>e.id!==id);save();renderCalendar();}
+
+document.getElementById('event-modal').addEventListener('click',e=>{if(e.target===document.getElementById('event-modal'))closeEventModal();});
+document.getElementById('event-name-input').addEventListener('keydown',e=>{if(e.key==='Enter')saveEvent();});
+
+/* ---- SETTINGS ---- */
+function openSettings(){
+  const c=S.colors||DEFAULT.colors;
+  document.getElementById('s-planner-name').value=S.plannerName||'';
+  document.getElementById('s-home-label').value=S.homeLabel||'';
+  document.getElementById('c-bg2').value=c.bg2||'#f7f7f5';
+  document.getElementById('c-bg').value=c.bg||'#ffffff';
+  document.getElementById('c-accent').value=c.accent||'#1a1a1a';
+  document.getElementById('c-text').value=c.text||'#1a1a1a';
+  renderSettingsProjects();renderSettingsFixed();
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+function resetColors(){
+  const d=DEFAULT.colors;
+  document.getElementById('c-bg2').value=d.bg2;
+  document.getElementById('c-bg').value=d.bg;
+  document.getElementById('c-accent').value=d.accent;
+  document.getElementById('c-text').value=d.text;
+}
+
+function renderSettingsProjects(){
+  const el=document.getElementById('proj-edit-list');
+  el.innerHTML='';
+  S.projects.forEach((p,idx)=>{
+    const row=document.createElement('div');
+    row.className='proj-edit-row';
+    row.innerHTML=`
+      <div class="proj-edit-top">
+        <input class="proj-edit-input" data-idx="${idx}" value="${esc(p.name)}" placeholder="프로젝트 이름" />
+        <select class="proj-edit-select" data-idx="${idx}">
+          ${STATUS_LIST.map(s=>`<option ${p.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <button class="proj-del-btn" data-idx="${idx}">×</button>
+      </div>
+      <div class="cl-edit-area" id="cledit_${idx}"></div>
+      <button class="add-cl-btn" data-idx="${idx}">+ 체크리스트 항목 추가</button>`;
+    el.appendChild(row);
+    renderClEdit(idx,p);
+  });
+  el.querySelectorAll('.proj-edit-input').forEach(inp=>{
+    inp.addEventListener('input',e=>{S.projects[parseInt(e.target.dataset.idx)].name=e.target.value;});
+  });
+  el.querySelectorAll('.proj-edit-select').forEach(sel=>{
+    sel.addEventListener('change',e=>{S.projects[parseInt(e.target.dataset.idx)].status=e.target.value;});
+  });
+  el.querySelectorAll('.proj-del-btn').forEach(btn=>{
+    btn.addEventListener('click',e=>{S.projects.splice(parseInt(e.target.dataset.idx),1);renderSettingsProjects();});
+  });
+  el.querySelectorAll('.add-cl-btn').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      const idx=parseInt(e.target.dataset.idx);
+      S.projects[idx].checklist.push({text:'',done:false});
+      renderClEdit(idx,S.projects[idx]);
+    });
+  });
+}
+
+function renderClEdit(idx,p){
+  const area=document.getElementById('cledit_'+idx);
+  if(!area)return;
+  area.innerHTML='';
+  (p.checklist||[]).forEach((item,ci)=>{
+    const div=document.createElement('div');div.className='cl-edit-item';
+    div.innerHTML=`<input class="cl-edit-input" data-idx="${idx}" data-ci="${ci}" value="${esc(item.text)}" placeholder="항목 입력" /><button class="cl-item-del" data-idx="${idx}" data-ci="${ci}">×</button>`;
+    area.appendChild(div);
+  });
+  area.querySelectorAll('.cl-edit-input').forEach(inp=>{
+    inp.addEventListener('input',e=>{
+      S.projects[parseInt(e.target.dataset.idx)].checklist[parseInt(e.target.dataset.ci)].text=e.target.value;
+    });
+  });
+  area.querySelectorAll('.cl-item-del').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      const i=parseInt(e.target.dataset.idx),ci=parseInt(e.target.dataset.ci);
+      S.projects[i].checklist.splice(ci,1);renderClEdit(i,S.projects[i]);
+    });
+  });
+}
+
+function addProject(){
+  S.projects.push({id:S.nextId++,name:'새 프로젝트',status:'시작 전',next:'',checklist:[]});
+  renderSettingsProjects();
+}
+
+function renderSettingsFixed(){
+  const el=document.getElementById('fixed-edit-list');el.innerHTML='';
+  DAYS_KO.forEach(d=>{
+    const row=document.createElement('div');row.className='fixed-edit-row';
+    row.innerHTML=`<span class="fixed-day-lbl">${d}</span><input class="fixed-edit-input" data-day="${d}" value="${esc(S.fixed[d]||'')}" placeholder="고정 일정 없음" />`;
+    el.appendChild(row);
+  });
+  el.querySelectorAll('.fixed-edit-input').forEach(inp=>{
+    inp.addEventListener('input',e=>{S.fixed[e.target.dataset.day]=e.target.value;});
+  });
+}
+
+function saveSettings(){
+  S.plannerName=document.getElementById('s-planner-name').value||'My Planner';
+  S.homeLabel=document.getElementById('s-home-label').value||'Projects';
+  S.colors={
+    bg:document.getElementById('c-bg').value,
+    bg2:document.getElementById('c-bg2').value,
+    accent:document.getElementById('c-accent').value,
+    text:document.getElementById('c-text').value,
+  };
+  save();applyColors();closeSettings();
+  renderHome();renderWeekly();renderCalendar();
+}
+
+function switchStab(name,btn){
+  document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.spane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('spane-'+name).classList.add('active');
+}
+
+document.getElementById('settings-modal').addEventListener('click',e=>{if(e.target===document.getElementById('settings-modal'))closeSettings();});
+
+/* ---- Tab ---- */
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick*="${name}"]`).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ---- MINI CALENDAR ---- */
+let miniCalYear=new Date().getFullYear();
+let miniCalMonth=new Date().getMonth();
+
+function openMiniCal(e){
+  e.stopPropagation();
+  miniCalYear=new Date().getFullYear();
+  miniCalMonth=new Date().getMonth();
+  renderMiniCal();
+  const popup=document.getElementById('mini-cal-popup');
+  const overlay=document.getElementById('mini-cal-overlay');
+  const btn=document.getElementById('week-range-label');
+  const rect=btn.getBoundingClientRect();
+  popup.style.display='block';
+  popup.style.top=(rect.bottom+6)+'px';
+  popup.style.left=rect.left+'px';
+  overlay.classList.add('open');
+}
+function closeMiniCal(){
+  document.getElementById('mini-cal-popup').style.display='none';
+  document.getElementById('mini-cal-overlay').classList.remove('open');
+}
+function miniChangeMonth(dir){
+  miniCalMonth+=dir;
+  if(miniCalMonth>11){miniCalMonth=0;miniCalYear++;}
+  if(miniCalMonth<0){miniCalMonth=11;miniCalYear--;}
+  renderMiniCal();
+}
+function renderMiniCal(){
+  document.getElementById('mini-cal-label').textContent=miniCalYear+'년 '+MONTHS_KO[miniCalMonth];
+  const body=document.getElementById('mini-cal-body');
+  body.innerHTML='';
+  const today=new Date();
+  const firstDay=new Date(miniCalYear,miniCalMonth,1).getDay();
+  const daysInMonth=new Date(miniCalYear,miniCalMonth+1,0).getDate();
+  const daysInPrev=new Date(miniCalYear,miniCalMonth,0).getDate();
+  const selMon=S.selectedWeekMonday;
+  const selSun=addDays(selMon,6);
+  let cells=[];
+  for(let i=firstDay-1;i>=0;i--)cells.push({d:daysInPrev-i,other:true});
+  for(let d=1;d<=daysInMonth;d++)cells.push({d,other:false});
+  while(cells.length%7!==0)cells.push({d:cells.length-firstDay-daysInMonth+1,other:true});
+  for(let r=0;r<cells.length/7;r++){
+    const tr=document.createElement('tr');
+    for(let c=0;c<7;c++){
+      const cell=cells[r*7+c];
+      const td=document.createElement('td');
+      const dateStr=miniCalYear+'-'+String(miniCalMonth+1).padStart(2,'0')+'-'+String(cell.d).padStart(2,'0');
+      const isTod=!cell.other&&cell.d===today.getDate()&&miniCalMonth===today.getMonth()&&miniCalYear===today.getFullYear();
+      const inWeek=!cell.other&&dateStr>=selMon&&dateStr<=selSun;
+      const btn=document.createElement('button');
+      btn.className='mini-day'+(cell.other?' m-other':'')+(isTod?' m-today':'')+(inWeek?' m-inweek':'');
+      btn.textContent=cell.d;
+      if(!cell.other){
+        btn.onclick=()=>{
+          S.selectedWeekMonday=getMondayStr(new Date(dateStr));
+          save();renderWeekly();closeMiniCal();
+        };
+      }
+      td.appendChild(btn);tr.appendChild(td);
+    }
+    body.appendChild(tr);
+  }
+}
+
+/* ---- INIT ---- */
+(async()=>{
+  await load();
+  applyColors();renderHome();renderWeekly();renderCalendar();
+})();
+</script>
+</body>
+</html>
